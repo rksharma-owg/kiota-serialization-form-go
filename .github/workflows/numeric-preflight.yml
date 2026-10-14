@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sha: ["fca913c8b2b4218e5ca7eab9b3aac9642953fe0b", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
+        sha: ["b353fb93332ac59f2821446e5815d94a5f3edafe", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
         go: ["^1.24", "1.25.x", "1.26.x"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sha: ["fca913c8b2b4218e5ca7eab9b3aac9642953fe0b", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
+        sha: ["b353fb93332ac59f2821446e5815d94a5f3edafe", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
