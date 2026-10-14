@@ -1,0 +1,84 @@
+name: Form numeric parsing preflight
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        sha: ["fca913c8b2b4218e5ca7eab9b3aac9642953fe0b", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
+        go: ["^1.24", "1.25.x", "1.26.x"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify tested commit and baseline
+        env:
+          EXPECTED_SHA: ${{ matrix.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git rev-parse HEAD
+          git merge-base --is-ancestor ba6731ca9a481e942240ff6fb3a13b8143258a09 HEAD
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Record runtime
+        run: |
+          go version
+          go env GOVERSION GOTOOLCHAIN
+      - name: Check changed-file formatting
+        run: test -z "$(gofmt -l form_parse_node.go form_parse_node_test.go)"
+      - name: Install dependencies
+        run: go install
+      - name: Build
+        run: go build
+      - name: Vet
+        run: go vet ./...
+      - name: Unit tests
+        run: go test -json ./...
+      - name: Race and coverage
+        run: go test -race -coverprofile cover.out -coverpkg=./... ./...
+      - name: Coverage report
+        run: go tool cover -func=cover.out
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        sha: ["fca913c8b2b4218e5ca7eab9b3aac9642953fe0b", "ba6731ca9a481e942240ff6fb3a13b8143258a09"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify tested commit and baseline
+        env:
+          EXPECTED_SHA: ${{ matrix.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git rev-parse HEAD
+          git merge-base --is-ancestor ba6731ca9a481e942240ff6fb3a13b8143258a09 HEAD
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: "^1.24"
+      - name: Record runtime
+        run: go version
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+        with:
+          languages: go
+      - uses: github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
+        with:
+          category: numeric-form-${{ matrix.sha }}
